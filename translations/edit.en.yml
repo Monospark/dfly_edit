@@ -1,0 +1,29 @@
+en:
+  # actions
+  cut: cut
+  copy: copy
+  replace: replace
+  delete: delete
+  select: select
+
+  # scopes
+  all: all
+  line: line
+  line content: line content
+  this: this
+  string: string
+  string content: string content
+  letter: letter
+  left: left
+  right: right
+
+  # miscellaneous
+  delete: delete [<n>]
+  backspace: backspace [<n>]
+  paste: paste
+  new_line: (new-line | new line) [<n>]
+  new_line_here: (new-line | new line) [<n>] here
+  indent: indent [<n>]
+  unindent: unindent [<n>]
+  undo: undo [<n> [times]]
+  redo: redo [<n> [times]]

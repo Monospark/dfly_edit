@@ -1,0 +1,74 @@
+en:
+  # common symbols
+  dash: dash
+  period: period
+  comma: comma
+  backslash: backslash
+  underscore: underscore
+  asterisk: star | asterisk
+  colon: colon
+  semicolon: semicolon | semi-colon
+  slash: slash
+  space: space
+  tab: tab
+  double_quote: \[double\] quote
+  single_quote: single quote
+  open_parenthese: open parenthesis | open paren
+  close_parenthese: close parenthesis | close paren
+  open_bracket: open bracket
+  close_bracket : close bracket
+  open_brace: open brace
+  close_brace : close brace
+  open_angle_bracket: open angle bracket
+  close_angle_bracket : close angle bracket
+
+  # surroundings
+  angle_brackets: angle brackets
+  brackets: brackets
+  braces: braces
+  parentheses: parens
+  double_quotes: \[double\] quotes
+  single_quotes: single quotes
+
+  # rare symbols
+  at: at
+  hash: hash
+  dollar: dollar
+  percent: percent
+  and: and
+  equal: equal
+  plus: plus
+  pipe: bar|vertical bar|pipe
+  caret: caret
+
+  # letters
+  a: alpha
+  b: bravo
+  c: charlie
+  d: delta
+  e: echo
+  f: foxtrot
+  g: golf
+  h: hotel
+  i: india
+  j: juliet
+  k: kilo
+  l: lima
+  m: mike
+  n: november
+  o: oscar
+  p: papa
+  q: quebec
+  r: romeo
+  s: sierra
+  t: tango
+  u: uniform
+  v: victor
+  w: whiskey
+  x: x-ray
+  y: yankee
+  z: zulu
+
+  # miscellaneous
+  capital: capital
+  symbol: symbol | sign
