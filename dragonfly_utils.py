@@ -1,6 +1,9 @@
-from dragonfly import Clipboard
+from dragonfly import Clipboard, MappingRule, Function
 from dragonfly import Key
 
+import nesting
+from command_tracker import text, sequence, func
+from edit import edit, Action
 
 __rule_counter = 0
 
@@ -26,3 +29,19 @@ def set_clipboard(text):
     clipboard = Clipboard()
     clipboard.set_text(text)
     clipboard.copy_to_system()
+
+
+def create_surround_rule(name, start, end):
+    def surround():
+        selected_text = get_selected_text()
+        to_write = start + selected_text + end
+        text(to_write).execute()
+
+    return MappingRule(mapping={
+        "empty " + name: text(),
+        name: sequence(
+                text(start + end),
+                func(nesting.instance().add_nesting_level(len(end)))
+            ),
+        "surround " + name: Function(surround)
+    })

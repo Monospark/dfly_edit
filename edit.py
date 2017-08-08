@@ -2,7 +2,7 @@ from dragonfly_loader import Unit
 
 from command_tracker import mouse, sequence, key, func, reversible
 from dragonfly import Clipboard, CompoundRule, Choice, MappingRule, IntegerRef, Grammar
-import global_state
+import mouse_state
 
 
 def _actions(t):
@@ -50,11 +50,11 @@ def _miscellaneous_rule(t):
     return MappingRule(
         mapping={
             t("select"): func(edit, action=Action.select, scope=Scope.this),
-            t("delete"): sequence(func(global_state.stop_marking_or_update_cursor), key("del/3:%(n)d")),
-            t("backspace"): sequence(func(global_state.stop_marking_or_update_cursor), key("backspace/1:%(n)d")),
-            t("paste"): sequence(func(global_state.stop_marking_or_update_cursor), key("c-v/3")),
-            t("new_line"): sequence(func(global_state.stop_marking_or_update_cursor), key("end/3, enter/3:%(n)d")),
-            t("new_line_here"): sequence(func(global_state.stop_marking_or_update_cursor), key("enter/3:%(n)d")),
+            t("delete"): sequence(func(mouse.stop_marking_or_update_cursor), key("del/3:%(n)d")),
+            t("backspace"): sequence(func(mouse.stop_marking_or_update_cursor), key("backspace/1:%(n)d")),
+            t("paste"): sequence(func(mouse.stop_marking_or_update_cursor), key("c-v/3")),
+            t("new_line"): sequence(func(mouse.stop_marking_or_update_cursor), key("end/3, enter/3:%(n)d")),
+            t("new_line_here"): sequence(func(mouse.stop_marking_or_update_cursor), key("enter/3:%(n)d")),
             t("indent"): reversible(func(indent), func(unindent)),
             t("unindent"): reversible(func(unindent), func(indent)),
             t("undo"): key("c-z/3"),
@@ -90,7 +90,7 @@ class Scope:
 
 
 def edit(action, scope):
-    global_state.stop_marking()
+    mouse.stop_marking()
 
     if scope is not None:
         scope.execute()
@@ -133,12 +133,12 @@ def select_string(include_quotes):
 
 
 def indent(n):
-    global_state.update_cursor()
+    mouse.update_cursor()
     key("home/3, tab:%s" % n).execute()
 
 
 def unindent(n):
-    global_state.update_cursor()
+    mouse.update_cursor()
     key("s-tab:%s" % n).execute()
 
 

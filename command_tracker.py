@@ -1,8 +1,8 @@
 from dragonfly import Function, ActionBase, ActionError, Rule, Compound, Key, Text, Mouse, MappingRule, IntegerRef, \
     Grammar
 
-import global_state
-from dragonfly_utils import get_selected_text, get_unique_rule_name
+import mouse_state
+import nesting
 
 previous_commands = []
 undoed_commands = []
@@ -11,13 +11,12 @@ current_command = None
 
 
 def add_nesting_level(level):
-    return reversible(func(global_state.add_nesting_level, level=level), func(global_state.remove_nesting_level))
+    return reversible(func(mouse_state.instance().add_nesting_level, level=level), func(mouse_state.instance().remove_nesting_level))
 
 
 def __on_mouse_input():
-    global_state.stop_marking()
-    global_state.is_something_marked = False
-    global_state.clear_nesting_levels()
+    mouse_state.instance().stop_marking()
+    nesting.instance().clear_nesting_levels()
 
 
 def key(action):
@@ -30,10 +29,6 @@ def func(f, **kwargs):
 
 def mouse(action):
     return irreversible(Function(__on_mouse_input) + Mouse(action))
-
-
-def surround_rule(name, prefix, suffix):
-    return _SurroundRule(name, prefix, suffix)
 
 
 def text(text):
@@ -111,54 +106,14 @@ class IrreversibleAction(_TrackedAction):
         undoed_commands = []
 
 
-class _SurroundRule(Rule):
-
-    def __init__(self, spec, start, end):
-        self.__start = start
-        self.__end = end
-        child = Compound("[empty] " + spec)
-        Rule.__init__(self, get_unique_rule_name(), child, exported=True)
-
-    def process_recognition(self, node):
-        from modules.edit import edit
-        from modules.edit import Action
-        from dragonfly import Text
-
-        is_empty = node.words()[0] == "empty"
-        if global_state.is_marking or global_state.is_something_marked:
-            if is_empty:
-                to_write = self.__start + self.__end
-            else:
-                selected_text = get_selected_text()
-                to_write = self.__start + selected_text + self.__end
-            sequence(
-                func(edit, action=Action.delete, scope=None),
-                reversible(Text(to_write), Key("backspace/1:%d" % len(to_write)))
-            ).execute()
-        else:
-            if is_empty:
-                text(self.__start + self.__end).execute()
-            else:
-                sequence(
-                    text(self.__start + self.__end),
-                    add_nesting_level(len(self.__end))
-                ).execute()
-
-
 class _PositionalText(Text):
 
     def __init__(self, spec=None, static=False, pause=Text._pause_default, autofmt=False):
         Text.__init__(self, spec=spec, static=static, pause=pause, autofmt=autofmt)
 
     def _execute_events(self, events):
-        from modules.edit import edit
-        from modules.edit import Action
-
-        if global_state.is_marking or global_state.is_something_marked:
-            edit(Action.delete, None)
-        elif global_state.get_complete_nesting_level() == 0:
-            if global_state.is_cursor_following_mouse:
-                mouse("left/3").execute()
+        if nesting.instance().get_complete_nesting_level() == 0:
+            mouse_state.instance().update_cursor()
         return Text._execute_events(self, events)
 
     def reverse(self):
