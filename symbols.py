@@ -3,7 +3,8 @@ import string
 from dragonfly import *
 from dragonfly_loader import Unit
 
-from command_tracker import text, surround_rule, key
+from command_tracker import text
+from dragonfly_utils import create_surround_rule
 
 
 def common_symbols(t):
@@ -76,7 +77,6 @@ def all_symbols(t):
 
 
 class Symbols(Unit):
-
     def __init__(self):
         Unit.__init__(self, "symbols")
 
@@ -101,8 +101,8 @@ class Symbols(Unit):
 
                 text(number).execute()
 
-        for key, value in surroundings.iteritems():
-            grammar.add_rule(surround_rule(key, value[0], value[1]))
+        for key, value in surroundings(t).iteritems():
+            grammar.add_rule(create_surround_rule(key, value[0], value[1]))
         grammar.add_rule(SymbolRule())
         grammar.add_rule(NumberRule())
         return True

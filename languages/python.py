@@ -1,13 +1,14 @@
 from dragonfly import *
 
-import modules.util.formatter as formatter
-import modules.global_state as global_state
-from modules.command_tracker import text, surround_rule, add_nesting_level, sequence
-from modules.command_tracker import text as _text
+import command_tracker
+import formatter
+from command_tracker import text, sequence
+from dictation import dictation
+from dragonfly_utils import create_surround_rule
+from nesting import nesting
 
 
 class LambdaRule(CompoundRule):
-
     spec = "[no-param] lambda"
 
     def _process_recognition(self, node, extras):
@@ -19,11 +20,10 @@ class LambdaRule(CompoundRule):
             string += " :"
         text(string).execute()
         if has_parameters:
-            global_state.add_nesting_level(1)
+            nesting.add_nesting_level(1)
 
 
 class DefineClassRule(CompoundRule):
-
     spec = "(def|define) [child] class [<text>]"
     extras = [Dictation("text")]
 
@@ -37,13 +37,12 @@ class DefineClassRule(CompoundRule):
             string += "()"
         text(string).execute()
         if is_child:
-            global_state.add_nesting_level(1)
+            nesting.add_nesting_level(1)
             if "text" not in extras:
-                global_state.add_nesting_level(1)
+                nesting.add_nesting_level(1)
 
 
 class DefineVariableRule(CompoundRule):
-
     spec = "(def|define) (variable|constant) [<text>] [equals]"
     extras = [Dictation("text")]
 
@@ -54,18 +53,18 @@ class DefineVariableRule(CompoundRule):
             if type == "variable":
                 name = formatter.format_snake_case(extras["text"])
             else:
-                name = formatter.format_text(extras["text"], [formatter.FormatType.snakeCase, formatter.FormatType.upperCase])
+                name = formatter.format_text(extras["text"],
+                                             [formatter.FormatType.snakeCase, formatter.FormatType.upperCase])
 
             string = name
 
         string += " = "
         text(string).execute()
         if "text" not in extras:
-            global_state.add_nesting_level(3)
+            nesting.add_nesting_level(3)
 
 
 class DefineFunctionRule(CompoundRule):
-
     spec = "(def|define) [no-param] (constructor | ((function | method) [<text>]))"
     extras = [Dictation("text")]
 
@@ -90,16 +89,15 @@ class DefineFunctionRule(CompoundRule):
         string += parameters_start + ")"
         text(string).execute()
         if has_parameters:
-            global_state.add_nesting_level(1)
+            nesting.add_nesting_level(1)
         if name is None:
             name_offset = len(parameters_start)
             if not has_parameters:
                 name_offset += 1
-            global_state.add_nesting_level(name_offset)
+            nesting.add_nesting_level(name_offset)
 
 
 class CallFunctionRule(CompoundRule):
-
     spec = "call [empty] (constructor | function <text>) [on]"
     extras = [Dictation("text")]
 
@@ -114,11 +112,10 @@ class CallFunctionRule(CompoundRule):
         text(string).execute()
 
         if has_arguments:
-            global_state.add_nesting_level(1)
+            nesting.add_nesting_level(1)
 
 
 class CreateObjectRule(CompoundRule):
-
     spec = "create [empty] <text>"
     extras = [Dictation("text")]
 
@@ -129,30 +126,30 @@ class CreateObjectRule(CompoundRule):
         text(string).execute()
 
         if has_arguments:
-            global_state.add_nesting_level(1)
+            nesting.add_nesting_level(1)
 
 
 def ternary():
     text(" if  else ").execute()
-    global_state.add_nesting_level(6)
-    global_state.add_nesting_level(4)
+    nesting.add_nesting_level(6)
+    nesting.add_nesting_level(4)
 
 
 def list_comprehension():
     text("[ for  in ]").execute()
-    global_state.add_nesting_level(1)
-    global_state.add_nesting_level(4)
-    global_state.add_nesting_level(5)
+    nesting.add_nesting_level(1)
+    nesting.add_nesting_level(4)
+    nesting.add_nesting_level(5)
 
 
-def format_variable(text, prefix="", suffix=""):
-    name = formatter.format_text(text, formatter.FormatType.snakeCase)
-    _text(prefix + name + suffix).execute()
+def format_variable(name, prefix="", suffix=""):
+    full_name = formatter.format_text(name, formatter.FormatType.snakeCase)
+    text(prefix + full_name + suffix).execute()
 
 
-def class_name(text):
-    name = formatter.format_text(text, formatter.FormatType.pascalCase)
-    _text(name).execute()
+def class_name(name):
+    full_name = formatter.format_text(name, formatter.FormatType.pascalCase)
+    text(full_name).execute()
 
 
 rules = MappingRule(
@@ -194,7 +191,7 @@ rules = MappingRule(
         "in": text(" in "),
         "is": text(" is "),
         "is not": text(" is not "),
-        "is instance": sequence(text("isinstance(, )"), add_nesting_level(1), add_nesting_level(2)),
+        "is instance": sequence(text("isinstance(, )"), command_tracker.add_nesting_level(1), command_tracker.add_nesting_level(2)),
         "import": text("import "),
         "lambda": text("lambda "),
         "less than": text(" < "),
@@ -222,10 +219,10 @@ rules = MappingRule(
         "while": text("while "),
         "yield": text("yield "),
 
-        "start block": Function(global_state.clear_nesting_levels) + Key("end") + text(":\n"),
-        "new entry": Function(global_state.clear_nesting_levels) + Key("end") + text(",\n"),
-        "next [(arg|argument)]": Function(global_state.remove_nesting_levels) + text(", "),
-        "value": Function(global_state.remove_nesting_levels) + text(": "),
+        "start block": Function(nesting.clear_nesting_levels) + Key("end") + text(":\n"),
+        "new entry": Function(nesting.clear_nesting_levels) + Key("end") + text(",\n"),
+        "next [(arg|argument)]": Function(nesting.remove_nesting_levels) + text(", "),
+        "value": Function(nesting.remove_nesting_levels) + text(": "),
 
         # Some common modules.
         "datetime": text("datetime"),
@@ -257,15 +254,15 @@ def create_grammar():
     grammar.add_rule(DefineVariableRule())
     grammar.add_rule(CallFunctionRule())
     grammar.add_rule(CreateObjectRule())
-    grammar.add_rule(surround_rule("string", "\"", "\""))
-    grammar.add_rule(surround_rule("to string", "str(", ")"))
-    grammar.add_rule(surround_rule("list", "list(", ")"))
-    grammar.add_rule(surround_rule("dictionary", "dict(", ")"))
-    grammar.add_rule(surround_rule("int", "int(", ")"))
-    grammar.add_rule(surround_rule("length", "len(", ")"))
-    grammar.add_rule(surround_rule("print", "print(", ")"))
-    grammar.add_rule(surround_rule("reversed", "reversed(", ")"))
-    grammar.add_rule(surround_rule("range", "range(", ")"))
-    grammar.add_rule(surround_rule("doc string", '"""', '"""'))
-    global_state.add_dictation_incompatible_grammar(grammar)
+    grammar.add_rule(create_surround_rule("string", "\"", "\""))
+    grammar.add_rule(create_surround_rule("to string", "str(", ")"))
+    grammar.add_rule(create_surround_rule("list", "list(", ")"))
+    grammar.add_rule(create_surround_rule("dictionary", "dict(", ")"))
+    grammar.add_rule(create_surround_rule("int", "int(", ")"))
+    grammar.add_rule(create_surround_rule("length", "len(", ")"))
+    grammar.add_rule(create_surround_rule("print", "print(", ")"))
+    grammar.add_rule(create_surround_rule("reversed", "reversed(", ")"))
+    grammar.add_rule(create_surround_rule("range", "range(", ")"))
+    grammar.add_rule(create_surround_rule("doc string", '"""', '"""'))
+    dictation.add_dictation_incompatible_grammar(grammar)
     return grammar, False

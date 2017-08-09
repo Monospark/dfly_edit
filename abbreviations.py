@@ -1,21 +1,23 @@
-from dragonfly import Choice, Compound, MappingRule, CompoundRule, RuleRef
+from dragonfly import Choice, CompoundRule
 from dragonfly_loader import Unit, json_parser, loader
 
 from command_tracker import text
 
 
 class Abbreviations(Unit):
-
-    def __init__(self, grammar_name="abbreviations"):
-        Unit.__init__(self, grammar_name)
+    def __init__(self):
+        Unit.__init__(self, "abbreviations")
+        self.__abbreviation_map = {}
 
     def create_grammar(self, g, t):
+        map = self.__abbreviation_map
+
         class AbbreviationRule(CompoundRule):
             spec = "[cap|capitalize] abbreviate <abbreviation>"
 
-            def __init__(self, exported):
-                extras = [Choice("abbreviation", self.__abbreviation_map)]
-                CompoundRule.__init__(self, extras=extras, exported=exported)
+            def __init__(self):
+                extras = [Choice("abbreviation", map)]
+                CompoundRule.__init__(self, extras=extras)
 
             def value(self, node):
                 return node.get_child_by_name("abbreviation").value()

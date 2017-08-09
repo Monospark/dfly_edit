@@ -1,8 +1,9 @@
+from dragonfly import CompoundRule, Choice, MappingRule, IntegerRef
 from dragonfly_loader import Unit
 
 from command_tracker import mouse, sequence, key, func, reversible
-from dragonfly import Clipboard, CompoundRule, Choice, MappingRule, IntegerRef, Grammar
-import mouse_state
+from editor import editor
+from mouse_state import mouse_state
 
 
 def _actions(t):
@@ -43,20 +44,27 @@ def _edit_rule(t):
             if "scope" in extras:
                 scope = extras["scope"]
             edit(action, scope)
+
     return NormalActionRule()
 
 
 def _miscellaneous_rule(t):
+    def pre_action():
+        if not mouse_state.stop_marking():
+            mouse_state.update_cursor()
+
     return MappingRule(
         mapping={
             t("select"): func(edit, action=Action.select, scope=Scope.this),
-            t("delete"): sequence(func(mouse.stop_marking_or_update_cursor), key("del/3:%(n)d")),
-            t("backspace"): sequence(func(mouse.stop_marking_or_update_cursor), key("backspace/1:%(n)d")),
-            t("paste"): sequence(func(mouse.stop_marking_or_update_cursor), key("c-v/3")),
-            t("new_line"): sequence(func(mouse.stop_marking_or_update_cursor), key("end/3, enter/3:%(n)d")),
-            t("new_line_here"): sequence(func(mouse.stop_marking_or_update_cursor), key("enter/3:%(n)d")),
-            t("indent"): reversible(func(indent), func(unindent)),
-            t("unindent"): reversible(func(unindent), func(indent)),
+            t("delete"): sequence(func(pre_action), key("del/3:%(n)d")),
+            t("backspace"): sequence(func(pre_action), key("backspace/1:%(n)d")),
+            t("paste"): sequence(func(pre_action), key("c-v/3")),
+            t("new_line"): sequence(func(pre_action), key("end/3, enter/3:%(n)d")),
+            t("new_line_here"): sequence(func(pre_action), key("enter/3:%(n)d")),
+            t("indent"): reversible(func(lambda: editor.instance().indent()),
+                                    func(lambda: editor.instance().unindent())),
+            t("unindent"): reversible(func(lambda: editor.instance().unindent()),
+                                      func(lambda: editor.instance().indent())),
             t("undo"): key("c-z/3"),
             t("redo"): key("c-y/3")
         },
@@ -82,64 +90,21 @@ class Scope:
     line = mouse("left/3, left/3, left/3")
     line_content = sequence(mouse("left/3"), key("home/3, s-end/3"))
     this = mouse("left/3, left/3")
-    string = func(select_string, include_quotes=True)
-    string_content = func(select_string, include_quotes=False)
+    string = func(lambda: editor.instance().mark_surrounded_text("\"", "\"", True))
+    string_content = func(lambda: editor.instance().mark_surrounded_text("\"", "\"", False))
     letter = sequence(mouse("left/3"), key("s-right/3"))
     left = sequence(mouse("left/3"), key("s-home/3"))
     right = sequence(mouse("left/3"), key("s-end/3"))
 
 
 def edit(action, scope):
-    mouse.stop_marking()
+    mouse_state.stop_marking()
 
     if scope is not None:
         scope.execute()
 
     if action is not None:
         action.execute()
-
-
-def select_string(include_quotes):
-    mouse("left/3").execute()
-    clipboard = Clipboard()
-    saved_text = clipboard.get_system_text()
-    clipboard.set_system_text('')
-    left_counter = 0
-    while left_counter < 50:
-        key("s-left, c-c/3").execute()
-        left_counter += 1
-        if clipboard.get_system_text().startswith("\""):
-            break
-
-    key("left").execute()
-    move_right = left_counter
-    if not include_quotes:
-        move_right -= 1
-        key("right").execute()
-    key("s-right:%s" % move_right).execute()
-
-    right_counter = 0
-    while right_counter < 50:
-        key("s-right, c-c/3").execute()
-        right_counter += 1
-        if clipboard.get_system_text().endswith("\""):
-            break
-
-    if not include_quotes:
-        key("s-left").execute()
-
-    clipboard.set_text(saved_text)
-    clipboard.copy_to_system()
-
-
-def indent(n):
-    mouse.update_cursor()
-    key("home/3, tab:%s" % n).execute()
-
-
-def unindent(n):
-    mouse.update_cursor()
-    key("s-tab:%s" % n).execute()
 
 
 class Edit(Unit):

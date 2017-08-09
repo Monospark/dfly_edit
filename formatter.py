@@ -1,6 +1,3 @@
-import dragonfly_utils
-import re
-
 class FormatType:
     camelCase = 1
     pascalCase = 2
@@ -11,8 +8,8 @@ class FormatType:
     dashify = 7
     dotify = 8
     spokenForm = 9
-    
-    
+
+
 format_map = {
     "camel case": FormatType.camelCase,
     "pascal case": FormatType.pascalCase,
@@ -147,7 +144,7 @@ def format_text(text, format_type):
     for value in format_type:
         if not result:
             if format_type == FormatType.spokenForm:
-                result = dragonfly_utils.words
+                result = text
             else:
                 result = str(text)
         method = FORMAT_TYPES_MAP[value]
@@ -156,9 +153,7 @@ def format_text(text, format_type):
 
 
 def format_and_write_text(text, format_type):
-    from command_tracker import text as _text
+    import command_tracker
 
     formatted = format_text(text, format_type)
-    _text(formatted).execute()
-
-
+    command_tracker.text(formatted).execute()

@@ -1,30 +1,20 @@
+import Tkinter as tk
+
 from dragonfly import MappingRule
 from dragonfly_loader import Unit
 
 from command_tracker import func
-
-import nesting
-import Tkinter as tk
+from nesting import nesting
 
 
 class _DictationWindow(tk.Frame):
     def __init__(self, parent):
         tk.Frame.__init__(self, parent)
-
-        # create a prompt, an input box, an output label,
-        # and a button to do the computation
-        self.prompt = tk.Label(self, text="Enter a number:", anchor="w")
         self.entry = tk.Entry(self)
-        self.output = tk.Label(self, text="")
-
-        # lay the widgets out on the screen.
-        self.prompt.pack(side="top", fill="x")
         self.entry.pack(side="top", fill="x", padx=20)
-        self.output.pack(side="top", fill="x", expand=True)
 
 
 class Dictation(Unit):
-
     def __init__(self):
         Unit.__init__(self, "dictation")
         self.__is_dictating = False
@@ -41,10 +31,13 @@ class Dictation(Unit):
     def is_dictating(self):
         return self.__is_dictating
 
+    def add_dictation_incompatible_grammar(self, grammar):
+        self.__dictation_incompatible_grammars.append(grammar)
+
     def __start_dictating(self, func):
         self.__func = func
         self.__is_dictating = True
-        nesting.instance().set_floor()
+        nesting.set_floor()
         for grammar in self.__dictation_incompatible_grammars:
             if grammar.enabled:
                 grammar.disable()
@@ -54,14 +47,14 @@ class Dictation(Unit):
         if self.__dictation is None:
             self.__dictation = text
         else:
-            split_position = len(self.__dictation) - nesting.instance().get_complete_nesting_level()
+            split_position = len(self.__dictation) - nesting.get_complete_nesting_level()
             prefix = self.__dictation[:split_position]
             suffix = self.__dictation[split_position:]
             self.__dictation = prefix + text + suffix
 
     def __stop_dictating(self):
         self.__is_dictating = False
-        nesting.instance().clear_nesting_levels()
+        nesting.clear_nesting_levels()
         print(self.__dictation)
         self.__dictation = None
 
@@ -81,18 +74,8 @@ class Dictation(Unit):
         return [(self.__root.update, 0.01)]
 
 
-__unit = Dictation()
-
-
-def is_dictating():
-    return __unit.is_dictating
-
-
-def append_dictation(dictation):
-    __unit.append_dictation(dictation)
+dictation = Dictation()
 
 
 def create_unit():
-    return __unit
-
-
+    return dictation

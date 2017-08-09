@@ -1,11 +1,11 @@
-from dragonfly import Grammar, Function, MappingRule, Key, Mouse
-import win32api, win32con
+import win32api
 
+import win32con
+from dragonfly import Function, MappingRule, Mouse
 from dragonfly_loader import Unit
 
 
 class MouseState(Unit):
-
     def __init__(self):
         Unit.__init__(self, "mouse_state")
         self.__is_cursor_following_mouse = False
@@ -13,12 +13,14 @@ class MouseState(Unit):
 
     def update_cursor(self):
         if self.__is_cursor_following_mouse:
-            MouseState("left/3").execute()
+            Mouse("left/3").execute()
 
     def stop_marking(self):
         if self.__is_marking:
             self.__is_marking = False
             win32api.mouse_event(win32con.MOUSEEVENTF_LEFTUP, 0, 0, 0, 0)
+            return True
+        return False
 
     def __toggle_marking(self):
         if self.__is_marking:
@@ -47,12 +49,9 @@ class MouseState(Unit):
         }))
         return True
 
-__unit = MouseState()
 
-
-def instance():
-    return __unit
+mouse_state = MouseState()
 
 
 def create_unit():
-    return __unit
+    return mouse_state

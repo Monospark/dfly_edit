@@ -1,8 +1,6 @@
 from dragonfly import Key, MappingRule, Function
 from dragonfly_loader import Unit
 
-import dictation
-
 
 class Nesting(Unit):
     def __init__(self):
@@ -17,17 +15,21 @@ class Nesting(Unit):
         self.__floor = 0
 
     def add_nesting_level(self, level):
+        from dictation import dictation
+
         self.__nesting_levels.append(level)
-        if not dictation.is_dictating():
+        if not dictation.is_dictating:
             Key("left/3:%s" % level).execute()
 
     def remove_nesting_level(self):
+        from dictation import dictation
+
         if len(self.__nesting_levels) == self.__floor:
             return
 
         if len(self.__nesting_levels) != 0:
             value = self.__nesting_levels.pop()
-            if not dictation.is_dictating():
+            if not dictation.is_dictating:
                 Key("right/3:%s" % value).execute()
 
     def get_complete_nesting_level(self):
@@ -62,12 +64,8 @@ class Nesting(Unit):
         return True
 
 
-__unit = Nesting()
-
-
-def instance():
-    return __unit
+nesting = Nesting()
 
 
 def create_unit():
-    return __unit
+    return nesting

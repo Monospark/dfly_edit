@@ -1,11 +1,11 @@
 from dragonfly import *
 
-import modules.util.formatter
+import formatter
 
 
 def define_function(text):
     Text("function ").execute()
-    modules.util.formatter.camel_case_text(text)
+    formatter.format_and_write_text(text, formatter.FormatType.camelCase)
     Text("() {").execute()
     Key("left:3").execute()
 

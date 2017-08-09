@@ -1,8 +1,5 @@
-from dragonfly import Function, ActionBase, ActionError, Rule, Compound, Key, Text, Mouse, MappingRule, IntegerRef, \
+from dragonfly import Function, ActionBase, ActionError, Key, Text, Mouse, MappingRule, IntegerRef, \
     Grammar
-
-import mouse_state
-import nesting
 
 previous_commands = []
 undoed_commands = []
@@ -11,12 +8,16 @@ current_command = None
 
 
 def add_nesting_level(level):
-    return reversible(func(mouse_state.instance().add_nesting_level, level=level), func(mouse_state.instance().remove_nesting_level))
+    from nesting import nesting
+    return reversible(func(nesting.add_nesting_level, level=level), func(nesting.remove_nesting_level))
 
 
 def __on_mouse_input():
-    mouse_state.instance().stop_marking()
-    nesting.instance().clear_nesting_levels()
+    from nesting import nesting
+    from mouse_state import mouse_state
+
+    mouse_state.stop_marking()
+    nesting.clear_nesting_levels()
 
 
 def key(action):
@@ -81,7 +82,6 @@ class _TrackedAction(ActionBase):
 
 
 class _ReversibleAction(_TrackedAction):
-
     def __init__(self, action, reverse_action):
         self.reverse_action = reverse_action
         _TrackedAction.__init__(self, action)
@@ -95,7 +95,6 @@ def irreversible(action):
 
 
 class IrreversibleAction(_TrackedAction):
-
     def __init__(self, action):
         _TrackedAction.__init__(self, action)
 
@@ -107,13 +106,15 @@ class IrreversibleAction(_TrackedAction):
 
 
 class _PositionalText(Text):
-
     def __init__(self, spec=None, static=False, pause=Text._pause_default, autofmt=False):
         Text.__init__(self, spec=spec, static=static, pause=pause, autofmt=autofmt)
 
     def _execute_events(self, events):
-        if nesting.instance().get_complete_nesting_level() == 0:
-            mouse_state.instance().update_cursor()
+        from nesting import nesting
+        from mouse_state import mouse_state
+
+        if nesting.get_complete_nesting_level() == 0:
+            mouse_state.update_cursor()
         return Text._execute_events(self, events)
 
     def reverse(self):
