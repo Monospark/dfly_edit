@@ -1,8 +1,7 @@
 from dragonfly import MappingRule, Function
 
-from command_tracker import text, sequence, func
+from command_tracker import text, sequence, func, add_nesting_level
 from editor import editor
-from nesting import nesting
 
 
 def create_surround_rule(name, start, end):
@@ -15,7 +14,7 @@ def create_surround_rule(name, start, end):
         "empty " + name: text(start + end),
         name: sequence(
             text(start + end),
-            func(nesting.add_nesting_level(len(end)))
+            add_nesting_level(len(end))
         ),
         "surround " + name: Function(surround)
     })

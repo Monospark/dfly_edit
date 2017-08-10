@@ -56,7 +56,7 @@ def _miscellaneous_rule(t):
     return MappingRule(
         mapping={
             t("select"): func(edit, action=Action.select, scope=Scope.this),
-            t("delete"): sequence(func(pre_action), key("del/3:%(n)d")),
+            t("delete_multiple"): sequence(func(pre_action), key("del/3:%(n)d")),
             t("backspace"): sequence(func(pre_action), key("backspace/1:%(n)d")),
             t("paste"): sequence(func(pre_action), key("c-v/3")),
             t("new_line"): sequence(func(pre_action), key("end/3, enter/3:%(n)d")),

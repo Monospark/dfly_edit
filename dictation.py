@@ -1,4 +1,5 @@
 import Tkinter as tk
+import traceback
 
 from dragonfly import MappingRule
 from dragonfly_loader import Unit

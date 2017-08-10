@@ -18,7 +18,7 @@ en:
   right: right
 
   # miscellaneous
-  delete: delete [<n>]
+  delete_multiple: delete [<n>]
   backspace: backspace [<n>]
   paste: paste
   new_line: (new-line | new line) [<n>]

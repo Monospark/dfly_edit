@@ -80,10 +80,10 @@ class Symbols(Unit):
     def __init__(self):
         Unit.__init__(self, "symbols")
 
-    def create_grammar(self, grammar, t):
+    def create_grammar(self, g, t):
         class SymbolRule(CompoundRule):
             spec = "<symbols>"
-            extras = [Repetition(name="symbols", child=Choice("symbols", all_symbols), max=20)]
+            extras = [Repetition(name="symbols", child=Choice("symbols", all_symbols(t)), max=20)]
 
             def _process_recognition(self, node, extras):
                 text(reduce(lambda x, y: x + y, extras["symbols"])).execute()
@@ -102,9 +102,9 @@ class Symbols(Unit):
                 text(number).execute()
 
         for key, value in surroundings(t).iteritems():
-            grammar.add_rule(create_surround_rule(key, value[0], value[1]))
-        grammar.add_rule(SymbolRule())
-        grammar.add_rule(NumberRule())
+            g.add_rule(create_surround_rule(key, value[0], value[1]))
+        g.add_rule(SymbolRule())
+        g.add_rule(NumberRule())
         return True
 
 

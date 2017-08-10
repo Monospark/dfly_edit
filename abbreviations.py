@@ -1,3 +1,5 @@
+import os
+
 from dragonfly import Choice, CompoundRule
 from dragonfly_loader import Unit, json_parser, loader
 
@@ -30,7 +32,8 @@ class Abbreviations(Unit):
 
     def load_config(self, config_path):
         file = "data/abbreviations." + loader.get_locale() + ".json"
-        self.__abbreviation_map = json_parser.parse_json(file)["abbreviations"]
+        absolute_file = os.path.join(os.path.dirname(__file__), file)
+        self.__abbreviation_map = json_parser.parse_json(absolute_file)["abbreviations"]
 
 
 def create_unit():

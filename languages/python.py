@@ -1,11 +1,11 @@
+
 from dragonfly import *
 
-import command_tracker
-import formatter
-from command_tracker import text, sequence
-from dictation import dictation
-from dragonfly_utils import create_surround_rule
-from nesting import nesting
+from dfly_edit.command_tracker import add_nesting_level, text, sequence
+from dfly_edit.dictation import dictation
+from dfly_edit.dragonfly_utils import create_surround_rule
+from dfly_edit.formatter import FormatType, format_text, format_snake_case
+from dfly_edit.nesting import nesting
 
 
 class LambdaRule(CompoundRule):
@@ -31,7 +31,7 @@ class DefineClassRule(CompoundRule):
         is_child = node.words()[1] == "child"
         string = "class "
         if "text" in extras:
-            string += formatter.format_text(extras["text"], formatter.FormatType.pascalCase)
+            string += format_text(extras["text"], FormatType.pascalCase)
 
         if is_child:
             string += "()"
@@ -51,10 +51,10 @@ class DefineVariableRule(CompoundRule):
         string = ""
         if "text" in extras:
             if type == "variable":
-                name = formatter.format_snake_case(extras["text"])
+                name = format_snake_case(extras["text"])
             else:
-                name = formatter.format_text(extras["text"],
-                                             [formatter.FormatType.snakeCase, formatter.FormatType.upperCase])
+                name = format_text(extras["text"],
+                                             [FormatType.snakeCase, FormatType.upperCase])
 
             string = name
 
@@ -77,7 +77,7 @@ class DefineFunctionRule(CompoundRule):
         if type == "constructor":
             name = "__init__"
         elif "text" in extras:
-            name = formatter.format_snake_case(extras["text"])
+            name = format_snake_case(extras["text"])
 
         if name is not None:
             string += name
@@ -103,7 +103,7 @@ class CallFunctionRule(CompoundRule):
 
     def _process_recognition(self, node, extras):
         is_constructor = "text" not in extras
-        name = "__init__" if is_constructor else formatter.format_text(extras["text"], formatter.FormatType.snakeCase)
+        name = "__init__" if is_constructor else format_text(extras["text"], FormatType.snakeCase)
         has_arguments = node.words()[1] != "empty"
         has_period = node.words()[len(node.words()) - 1] == "on"
         string = "." if has_period else ""
@@ -121,7 +121,7 @@ class CreateObjectRule(CompoundRule):
 
     def _process_recognition(self, node, extras):
         has_arguments = node.words()[1] != "empty"
-        string = formatter.format_text(extras["text"], formatter.FormatType.pascalCase)
+        string = format_text(extras["text"], FormatType.pascalCase)
         string += "()"
         text(string).execute()
 
@@ -143,12 +143,12 @@ def list_comprehension():
 
 
 def format_variable(name, prefix="", suffix=""):
-    full_name = formatter.format_text(name, formatter.FormatType.snakeCase)
+    full_name = format_text(name, FormatType.snakeCase)
     text(prefix + full_name + suffix).execute()
 
 
 def class_name(name):
-    full_name = formatter.format_text(name, formatter.FormatType.pascalCase)
+    full_name = format_text(name, FormatType.pascalCase)
     text(full_name).execute()
 
 
@@ -191,7 +191,7 @@ rules = MappingRule(
         "in": text(" in "),
         "is": text(" is "),
         "is not": text(" is not "),
-        "is instance": sequence(text("isinstance(, )"), command_tracker.add_nesting_level(1), command_tracker.add_nesting_level(2)),
+        "is instance": sequence(text("isinstance(, )"), add_nesting_level(1), add_nesting_level(2)),
         "import": text("import "),
         "lambda": text("lambda "),
         "less than": text(" < "),

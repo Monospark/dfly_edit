@@ -1,5 +1,5 @@
 from dragonfly import Clipboard, Key
-from command_tracker import key
+from dfly_edit.command_tracker import key
 
 
 class Editor:
